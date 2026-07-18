@@ -26,7 +26,7 @@
       -webkit-text-size-adjust: 100%;
     }
 
-    button, input, .header-btn, .between-btn, .add-line-btn, .lock-btn, .reorder-btn, .del-section-btn {
+    button, input, .header-btn, .between-btn, .add-line-btn, .reorder-btn, .del-section-btn {
       -webkit-touch-callout: none;
     }
 
@@ -188,10 +188,6 @@
       transition: border-color 0.2s;
     }
 
-    .section.locked {
-      border-color: #10b981;
-    }
-
     .section-header {
       display: flex;
       align-items: center;
@@ -200,10 +196,6 @@
       background: #f8f8f8;
       user-select: none;
       gap: 6px;
-    }
-
-    .section.locked .section-header {
-      background: #ecfdf5;
     }
 
     .chevron {
@@ -238,7 +230,7 @@
       white-space: nowrap;
     }
 
-    .reorder-btn, .lock-btn, .del-section-btn {
+    .reorder-btn, .del-section-btn {
       background: none;
       border: 1.5px solid #ddd;
       border-radius: 7px;
@@ -254,15 +246,9 @@
       flex-shrink: 0;
     }
 
-    .reorder-btn:hover, .lock-btn:hover, .del-section-btn:hover { background: #f0f0f0; border-color: #ccc; }
+    .reorder-btn:hover, .del-section-btn:hover { background: #f0f0f0; border-color: #ccc; }
     .reorder-btn:disabled { opacity: 0.3; cursor: default; }
     .reorder-btn:disabled:hover { background: none; border-color: #ddd; }
-
-    .section.locked .lock-btn {
-      background: #10b981;
-      border-color: #10b981;
-      color: #fff;
-    }
 
     /* ── Progress bar ── */
     .section-progress {
@@ -343,76 +329,6 @@
     .syllable-badge.orange { background: #fef3c7; color: #92400e; }
     .syllable-badge.red    { background: #fee2e2; color: #991b1b; }
 
-    .history-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #ddd;
-      font-size: 15px;
-      padding: 10px 8px;
-      min-width: 32px;
-      min-height: 32px;
-      margin-top: 0;
-      opacity: 0.55;
-      transition: opacity 0.15s, color 0.15s;
-      flex-shrink: 0;
-      font-family: inherit;
-      position: relative;
-    }
-
-    .line-row:hover .history-btn, .history-btn:active { opacity: 1; }
-    .history-btn:hover { color: #666; }
-    .history-btn.has-history { opacity: 1; color: #bbb; }
-
-    .history-popover {
-      position: absolute;
-      right: 0;
-      top: 100%;
-      background: #fff;
-      border: 1.5px solid #ebebeb;
-      border-radius: 10px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-      padding: 8px;
-      min-width: 200px;
-      max-width: 280px;
-      z-index: 300;
-      display: none;
-    }
-
-    .history-popover.open { display: block; }
-
-    .history-item {
-      font-size: 13px;
-      font-family: 'Georgia', serif;
-      color: #555;
-      padding: 6px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .history-item:hover { background: #f5f5f5; }
-
-    .history-item-text { flex: 1; }
-
-    .history-restore {
-      font-size: 10px;
-      font-weight: 700;
-      color: #10b981;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      flex-shrink: 0;
-    }
-
-    .history-empty {
-      font-size: 12px;
-      color: #ccc;
-      padding: 6px 8px;
-    }
-
     .delete-line-btn {
       background: none;
       border: none;
@@ -455,11 +371,6 @@
     }
 
     .add-line-btn:hover { background: #f5f5f5; color: #888; }
-
-    /* Locked — no editing */
-    .section.locked .line-editor    { pointer-events: none; color: #666; }
-    .section.locked .add-line-row   { display: none; }
-    .section.locked .delete-line-btn { display: none; }
 
     /* ── Slide-up panel (shared: rhyme + braindump) ── */
     .slide-panel {
@@ -695,9 +606,7 @@ const DEFAULT_SECTIONS = [
 const DEFAULT_RANGE = { green:[6,11], orange:[4,13] }; // used for custom/repeated sections
 
 const STORAGE_KEY = 'lyricForgeState_v1';
-const HISTORY_KEY = 'lyricForgeHistory_v1';
 let lineIdCounter = 0;
-let historyStore = {}; // { lineId: [ {text, ts}, ... ] }
 
 // ─── Syllable counter ──────────────────────────────────────────────────────
 function syllables(word) {
@@ -746,49 +655,6 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
 }
 
-// ─── Line history ──────────────────────────────────────────────────────────
-function recordHistory(lineId, oldText) {
-  if (!oldText || !oldText.trim()) return;
-  if (!historyStore[lineId]) historyStore[lineId] = [];
-  const arr = historyStore[lineId];
-  if (arr.length && arr[arr.length - 1].text === oldText) return;
-  arr.push({ text: oldText, ts: Date.now() });
-  if (arr.length > 8) arr.shift();
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(historyStore));
-}
-
-function buildHistoryPopover(lineId, editor) {
-  const pop = document.createElement('div');
-  pop.className = 'history-popover';
-  const items = historyStore[lineId] || [];
-  if (!items.length) {
-    pop.innerHTML = '<div class="history-empty">No earlier versions yet</div>';
-  } else {
-    [...items].reverse().forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'history-item';
-      const txt = document.createElement('span');
-      txt.className = 'history-item-text';
-      txt.textContent = item.text;
-      const restore = document.createElement('span');
-      restore.className = 'history-restore';
-      restore.textContent = 'Use';
-      row.appendChild(txt);
-      row.appendChild(restore);
-      row.onclick = () => {
-        const oldText = editor.innerText.replace(/\n/g,' ');
-        recordHistory(lineId, oldText);
-        editor.innerText = item.text;
-        editor.dispatchEvent(new Event('input'));
-        pop.classList.remove('open');
-        saveState();
-      };
-      pop.appendChild(row);
-    });
-  }
-  return pop;
-}
-
 // ─── Build section DOM ─────────────────────────────────────────────────────
 function makeLineRow(sectionEl, range, text) {
   const lineId = 'line-' + (++lineIdCounter) + '-' + Math.random().toString(36).slice(2,7);
@@ -815,32 +681,6 @@ function makeLineRow(sectionEl, range, text) {
   badge.textContent = initCount || '—';
   badge.className = 'syllable-badge ' + (initCount > 0 ? syllableColor(initCount, range) : '');
 
-  const histBtn = document.createElement('button');
-  histBtn.className = 'history-btn';
-  histBtn.textContent = '🕘';
-  histBtn.title = 'Earlier versions of this line';
-  histBtn.onclick = (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('.history-popover.open').forEach(p => p.classList.remove('open'));
-    let pop = histBtn.querySelector('.history-popover');
-    if (pop) pop.remove();
-    pop = buildHistoryPopover(lineId, editor);
-    histBtn.appendChild(pop);
-    pop.classList.add('open');
-  };
-
-  let lastCommitted = text || '';
-  editor.addEventListener('blur', () => {
-    const current = editor.innerText.replace(/\n/g,' ');
-    if (current !== lastCommitted) {
-      recordHistory(lineId, lastCommitted);
-      lastCommitted = current;
-      if (historyStore[lineId] && historyStore[lineId].length) {
-        histBtn.classList.add('has-history');
-      }
-    }
-  });
-
   const del = document.createElement('button');
   del.className = 'delete-line-btn';
   del.textContent = '×';
@@ -862,7 +702,6 @@ function makeLineRow(sectionEl, range, text) {
   row.appendChild(num);
   row.appendChild(editor);
   row.appendChild(badge);
-  row.appendChild(histBtn);
   row.appendChild(del);
   return row;
 }
@@ -886,7 +725,7 @@ function addLines(sectionEl, body, addRow, range, count) {
 
 function buildSection(s) {
   const el = document.createElement('div');
-  el.className = 'section';
+  el.className = 'section collapsed';
   el.dataset.range = s.range ? JSON.stringify(s.range) : '';
 
   // Header
@@ -898,7 +737,6 @@ function buildSection(s) {
     <span class="section-stats"></span>
     <button class="reorder-btn up-btn" title="Move up">▲</button>
     <button class="reorder-btn down-btn" title="Move down">▼</button>
-    <button class="lock-btn" onclick="toggleLock(event,this)">Lock</button>
     <button class="del-section-btn" title="Delete section">🗑</button>
   `;
   header.addEventListener('click', e => {
@@ -1009,28 +847,7 @@ function insertBetweenRow(afterEl) {
     refreshReorderButtons();
   };
 
-  const repeatBtn = document.createElement('button');
-  repeatBtn.className = 'between-btn';
-  repeatBtn.textContent = '↻ Repeat section';
-  repeatBtn.onclick = () => {
-    const sections = [...document.querySelectorAll('.section')];
-    const names = sections.map(s => s.querySelector('.section-name').value || 'Untitled');
-    const choice = prompt('Repeat which section? Type the exact name:\n\n' + names.join('\n'));
-    if (!choice) return;
-    const matchIdx = names.findIndex(n => n.toLowerCase() === choice.trim().toLowerCase());
-    if (matchIdx === -1) { alert('No section found with that name.'); return; }
-    const src = sections[matchIdx];
-    const range = src.dataset.range ? JSON.parse(src.dataset.range) : DEFAULT_RANGE;
-    const lines = [...src.querySelectorAll('.line-editor')].map(e => e.innerText.replace(/\n/g,' '));
-    const clone = buildSection({ name: names[matchIdx] + ' (repeat)', range, lines });
-    row.after(clone);
-    insertBetweenRow(clone);
-    saveState();
-    refreshReorderButtons();
-  };
-
   row.appendChild(addBtn);
-  row.appendChild(repeatBtn);
   afterEl.after(row);
   return row;
 }
@@ -1043,14 +860,6 @@ function updateProgress(sectionEl) {
   if (fill) fill.style.width = pct + '%';
   const stats   = sectionEl.querySelector('.section-stats');
   if (stats) stats.textContent = filled + '/' + editors.length + ' lines';
-}
-
-function toggleLock(e, btn) {
-  e.stopPropagation();
-  const s      = btn.closest('.section');
-  const locked = s.classList.toggle('locked');
-  btn.textContent = locked ? 'Locked ✓' : 'Lock';
-  saveState();
 }
 
 // ─── Rhyme panel ───────────────────────────────────────────────────────────
@@ -1158,59 +967,102 @@ function openBraindumpPanel() {
   loadBraindump(theme);
 }
 
-// Crude rhyme-family key: last stressed-ish vowel cluster + everything after it.
-// Good enough to cluster "day/way/say" and "night/light/right" together without a phonetic API.
-function rhymeKey(word) {
+// ─── Sound-based (phonetic) grouping ────────────────────────────────────────
+// Groups words by their stressed vowel SOUND (via ARPAbet pronunciation data
+// from Datamuse), not spelling — so "loud" clusters with "how", "sound",
+// "town", "found", "brown" etc. (all share the same AW vowel sound) instead
+// of only matching words that literally end in "-oud".
+const VOWEL_LABELS = {
+  AA: 'ah — father, hot',
+  AE: 'a — cat, hand',
+  AH: 'uh — cup, love',
+  AO: 'aw — law, caught',
+  AW: 'ow — how, loud, sound, now, town',
+  AY: 'eye — my, light, time',
+  EH: 'eh — bed, said',
+  ER: 'er — her, bird',
+  EY: 'ay — day, say, way',
+  IH: 'ih — sit, big',
+  IY: 'ee — see, feel',
+  OW: 'oh — go, own, know',
+  OY: 'oy — boy, voice',
+  UH: 'uu — book, good',
+  UW: 'oo — you, true',
+};
+const VOWEL_RE = /^(AA|AE|AH|AO|AW|AY|EH|ER|EY|IH|IY|OW|OY|UH|UW)([0-2])$/;
+
+// Fallback for words Datamuse has no pronunciation for — same crude
+// spelling-based key as before, just used as a last resort now.
+function fallbackSpellingKey(word) {
   const w = word.toLowerCase().replace(/[^a-z]/g, '');
   const m = w.match(/[aeiouy]+[^aeiouy]*$/);
   return m ? m[0] : w.slice(-2);
+}
+
+// Pick the vowel carrying primary stress (1); else secondary (2); else the last vowel at all.
+function vowelSoundFamily(pron) {
+  const phones = pron.trim().split(/\s+/);
+  let primary = null, secondary = null, last = null;
+  phones.forEach(p => {
+    const m = p.match(VOWEL_RE);
+    if (!m) return;
+    last = m[1];
+    if (m[2] === '1') primary = m[1];
+    else if (m[2] === '2' && !secondary) secondary = m[1];
+  });
+  return primary || secondary || last;
 }
 
 async function loadBraindump(theme) {
   const el = document.getElementById('braindumpResults');
   el.innerHTML = '<span class="panel-status">Loading...</span>';
   try {
-    const res  = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(theme)}&max=60`);
+    const res  = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(theme)}&md=r&max=60`);
     const data = await res.json();
-    const words = data.map(d => d.word);
-    renderRhymeGroupedChips(el, words);
+    renderSoundGroupedChips(el, data);
   } catch {
     el.innerHTML = '<span class="panel-status">No connection — try again</span>';
   }
 }
 
-function renderRhymeGroupedChips(el, words) {
-  if (!words.length) {
+function renderSoundGroupedChips(el, data) {
+  if (!data.length) {
     el.innerHTML = '<span class="panel-status">No results found</span>';
     return;
   }
 
-  // Group by rhyme key
-  const groups = {};
-  words.forEach(w => {
-    const key = rhymeKey(w);
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(w);
+  // Group by phonetic vowel-sound family (broad, assonance-style — same
+  // vowel sound regardless of the consonants around it).
+  const groups = {}; // key -> { label, words: [] }
+  data.forEach(d => {
+    const pronTag = (d.tags || []).find(t => t.startsWith('pron:'));
+    let key, label;
+    if (pronTag) {
+      const family = vowelSoundFamily(pronTag.slice(5));
+      if (family) { key = family; label = VOWEL_LABELS[family] || family; }
+    }
+    if (!key) { key = 'sp:' + fallbackSpellingKey(d.word); label = 'sounds like "-' + fallbackSpellingKey(d.word) + '"'; }
+    if (!groups[key]) groups[key] = { label, words: [] };
+    groups[key].words.push(d.word);
   });
 
-  // Rhyme families (2+ words) first, sorted biggest first; solo words go in a trailing "Other" group
-  const families = Object.entries(groups).filter(([,arr]) => arr.length > 1)
-    .sort((a,b) => b[1].length - a[1].length);
-  const solo = Object.values(groups).filter(arr => arr.length === 1).flat();
+  const families = Object.values(groups).filter(g => g.words.length > 1)
+    .sort((a,b) => b.words.length - a.words.length);
+  const solo = Object.values(groups).filter(g => g.words.length === 1).flatMap(g => g.words);
 
   el.innerHTML = '';
   el.style.display = 'block';
   el.style.maxHeight = '260px';
 
-  families.forEach(([key, arr]) => {
+  families.forEach(g => {
     const label = document.createElement('div');
     label.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#bbb;margin:8px 0 4px;';
-    label.textContent = 'rhymes with "-' + key + '" · ' + arr.length;
+    label.textContent = g.label + ' · ' + g.words.length;
     el.appendChild(label);
 
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;';
-    arr.forEach(w => row.appendChild(makeWordChip(w)));
+    g.words.forEach(w => row.appendChild(makeWordChip(w)));
     el.appendChild(row);
   });
 
@@ -1245,7 +1097,6 @@ function makeWordChip(w) {
 function serializeState() {
   const sections = [...document.querySelectorAll('.section')].map(s => ({
     name: s.querySelector('.section-name').value,
-    locked: s.classList.contains('locked'),
     range: s.dataset.range ? JSON.parse(s.dataset.range) : null,
     lines: [...s.querySelectorAll('.line-editor')].map(e => e.innerText.replace(/\n/g,' ')),
   }));
@@ -1351,8 +1202,6 @@ function exportToObsidian() {
 
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  const histRaw = localStorage.getItem(HISTORY_KEY);
-  if (histRaw) { try { historyStore = JSON.parse(histRaw); } catch {} }
 
   const content = document.getElementById('content');
   content.innerHTML = '';
@@ -1371,10 +1220,6 @@ function loadState() {
   let lastEl = null;
   sectionsToLoad.forEach(s => {
     const el = buildSection(s);
-    if (s.locked) {
-      el.classList.add('locked');
-      el.querySelector('.lock-btn').textContent = 'Locked ✓';
-    }
     content.appendChild(el);
     lastEl = insertBetweenRow(el);
     updateProgress(el);
@@ -1389,11 +1234,6 @@ function loadState() {
 
 document.getElementById('songTitle').addEventListener('input', debouncedSave);
 document.getElementById('themeInput').addEventListener('input', debouncedSave);
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.history-btn')) {
-    document.querySelectorAll('.history-popover.open').forEach(p => p.classList.remove('open'));
-  }
-});
 
 // ─── Init ──────────────────────────────────────────────────────────────────
 loadState();
