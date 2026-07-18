@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lyric Forge</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+      min-height: 100vh;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      position: sticky;
+      top: 0;
+      background: #fff;
+      border-bottom: 1px solid #ebebeb;
+      padding: 12px 16px 14px;
+      z-index: 100;
+    }
+
+    .app-name {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+
+    .header-top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .song-title-input {
+      flex: 1;
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    .song-title-input::placeholder { color: #d0d0d0; }
+
+    .header-btn {
+      background: none;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      padding: 6px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #666;
+      transition: all 0.15s;
+      font-family: inherit;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .header-btn:hover { background: #f5f5f5; border-color: #ccc; }
+    .header-btn.primary { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
+    .header-btn.primary:hover { background: #333; }
+
+    .theme-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .theme-input {
+      flex: 1;
+      border: 1.5px solid #ebebeb;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      color: #444;
+    }
+
+    .theme-input:focus { border-color: #ccc; }
+    .theme-input::placeholder { color: #d0d0d0; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      gap: 14px;
+      padding: 8px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid #ebebeb;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #777;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.green  { background: #10b981; }
+    .legend-dot.orange { background: #f59e0b; }
+    .legend-dot.red    { background: #ef4444; }
+
+    /* ── Content ── */
+    .content {
+      padding: 12px 14px 320px;
+    }
+
+    /* ── Add/Repeat section row (between sections) ── */
+    .between-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin: 2px 0 10px;
+    }
+
+    .between-btn {
+      background: none;
+      border: 1px dashed #ddd;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #aaa;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .between-btn:hover { background: #f8f8f8; border-color: #bbb; color: #777; }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 4px;
+      border: 1.5px solid #ebebeb;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .section.locked {
+      border-color: #10b981;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      padding: 11px 14px;
+      cursor: pointer;
+      background: #f8f8f8;
+      user-select: none;
+      gap: 6px;
+    }
+
+    .section.locked .section-header {
+      background: #ecfdf5;
+    }
+
+    .chevron {
+      font-size: 10px;
+      color: #bbb;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .section.collapsed .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .section-name {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #555;
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      cursor: text;
+    }
+
+    .section-stats {
+      font-size: 11px;
+      color: #bbb;
+      margin-right: 2px;
+      white-space: nowrap;
+    }
+
+    .reorder-btn, .lock-btn, .del-section-btn {
+      background: none;
+      border: 1.5px solid #ddd;
+      border-radius: 7px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #888;
+      transition: all 0.15s;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .reorder-btn:hover, .lock-btn:hover, .del-section-btn:hover { background: #f0f0f0; border-color: #ccc; }
+    .reorder-btn:disabled { opacity: 0.3; cursor: default; }
+    .reorder-btn:disabled:hover { background: none; border-color: #ddd; }
+
+    .section.locked .lock-btn {
+      background: #10b981;
+      border-color: #10b981;
+      color: #fff;
+    }
+
+    /* ── Progress bar ── */
+    .section-progress {
+      height: 3px;
+      background: #f3f3f3;
+    }
+
+    .section-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #34d399, #10b981);
+      transition: width 0.35s ease;
+      width: 0%;
+    }
+
+    /* ── Body ── */
+    .section-body { padding: 6px 0 10px; }
+
+    .section.collapsed .section-body { display: none; }
+
+    /* ── Line row ── */
+    .line-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 2px 12px;
+      gap: 6px;
+    }
+
+    .line-num {
+      font-size: 10px;
+      color: #ddd;
+      min-width: 14px;
+      padding-top: 8px;
+      text-align: right;
+      user-select: none;
+    }
+
+    .line-editor {
+      flex: 1;
+      min-height: 32px;
+      padding: 5px 4px;
+      border: none;
+      border-bottom: 1px solid #f0f0f0;
+      outline: none;
+      font-size: 16px;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      color: #1a1a1a;
+      line-height: 1.5;
+      background: transparent;
+      word-break: break-word;
+      cursor: text;
+    }
+
+    .line-editor:focus { border-bottom-color: #ccc; }
+
+    .line-editor:empty::before {
+      content: attr(data-placeholder);
+      color: #e0e0e0;
+      pointer-events: none;
+    }
+
+    .syllable-badge {
+      min-width: 34px;
+      height: 26px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 5px;
+      transition: background 0.2s, color 0.2s;
+      background: #f5f5f5;
+      color: #ccc;
+      flex-shrink: 0;
+    }
+
+    .syllable-badge.green  { background: #d1fae5; color: #065f46; }
+    .syllable-badge.orange { background: #fef3c7; color: #92400e; }
+    .syllable-badge.red    { background: #fee2e2; color: #991b1b; }
+
+    .history-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #ddd;
+      font-size: 13px;
+      padding: 6px 3px;
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+      flex-shrink: 0;
+      font-family: inherit;
+      position: relative;
+    }
+
+    .line-row:hover .history-btn { opacity: 1; }
+    .history-btn:hover { color: #666; }
+    .history-btn.has-history { opacity: 1; color: #bbb; }
+
+    .history-popover {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: #fff;
+      border: 1.5px solid #ebebeb;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      padding: 8px;
+      min-width: 200px;
+      max-width: 280px;
+      z-index: 300;
+      display: none;
+    }
+
+    .history-popover.open { display: block; }
+
+    .history-item {
+      font-size: 13px;
+      font-family: 'Georgia', serif;
+      color: #555;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-item:hover { background: #f5f5f5; }
+
+    .history-item-text { flex: 1; }
+
+    .history-restore {
+      font-size: 10px;
+      font-weight: 700;
+      color: #10b981;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .history-empty {
+      font-size: 12px;
+      color: #ccc;
+      padding: 6px 8px;
+    }
+
+    .delete-line-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #ddd;
+      font-size: 16px;
+      padding: 4px;
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+
+    .line-row:hover .delete-line-btn { opacity: 1; }
+    .delete-line-btn:hover { color: #ef4444; }
+
+    /* Add line */
+    .add-line-row {
+      display: flex;
+      gap: 6px;
+      margin: 6px 14px 4px;
+    }
+
+    .add-line-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      font-size: 12px;
+      color: #ccc;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 7px;
+      transition: background 0.15s, color 0.15s;
+      font-family: inherit;
+    }
+
+    .add-line-btn:hover { background: #f5f5f5; color: #888; }
+
+    /* Locked — no editing */
+    .section.locked .line-editor    { pointer-events: none; color: #666; }
+    .section.locked .add-line-row   { display: none; }
+    .section.locked .delete-line-btn { display: none; }
+
+    /* ── Slide-up panel (shared: rhyme + braindump) ── */
+    .slide-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 680px;
+      margin: 0 auto;
+      background: #fff;
+      border-top: 1.5px solid #ebebeb;
+      border-radius: 18px 18px 0 0;
+      padding: 16px 16px 20px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 200;
+      box-shadow: 0 -6px 32px rgba(0,0,0,0.07);
+    }
+
+    .slide-panel.open { transform: translateY(0); }
+
+    .panel-drag-handle {
+      width: 36px;
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      margin: 0 auto 14px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .panel-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    .panel-target-word {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      font-family: 'Georgia', serif;
+      margin-left: 8px;
+    }
+
+    .close-panel {
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #ccc;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      font-family: inherit;
+    }
+
+    .close-panel:hover { color: #888; }
+
+    /* Toggles */
+    .panel-toggles {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .panel-toggle {
+      padding: 5px 13px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #fff;
+      color: #888;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .panel-toggle.active {
+      background: #1a1a1a;
+      border-color: #1a1a1a;
+      color: #fff;
+    }
+
+    /* Results */
+    .panel-results {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      max-height: 160px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .word-chip {
+      padding: 6px 13px;
+      background: #f5f5f5;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.12s;
+      font-family: 'Georgia', serif;
+      user-select: none;
+    }
+
+    .word-chip:hover, .word-chip:active { background: #e8e8e8; }
+
+    .word-chip.copied {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .panel-status {
+      color: #ccc;
+      font-size: 13px;
+      padding: 4px 0;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a1a1a;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 400;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Tap hint ── */
+    .tap-hint {
+      text-align: center;
+      color: #ddd;
+      font-size: 12px;
+      margin-top: 20px;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-name">Lyric Forge</div>
+  <div class="header-top-row">
+    <input class="song-title-input" id="songTitle" type="text" placeholder="Untitled song..." />
+    <button class="header-btn" onclick="openBraindumpPanel()">💡 Brainstorm</button>
+    <button class="header-btn primary" onclick="manualSave()">💾 Save</button>
+    <button class="header-btn" onclick="exportToFile()">⬇ Export</button>
+    <button class="header-btn" onclick="exportToObsidian()">📓 Obsidian</button>
+  </div>
+  <div class="theme-row">
+    <input class="theme-input" id="themeInput" type="text" placeholder="Song idea / theme (used for the brainstorm panel)..." />
+  </div>
+  <div class="theme-row">
+    <input class="theme-input" id="artistInput" type="text" placeholder="Artist name (used for the Obsidian export)..." />
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot green"></div> Ideal range</div>
+  <div class="legend-item"><div class="legend-dot orange"></div> Slightly off</div>
+  <div class="legend-item"><div class="legend-dot red"></div> Too many / few</div>
+</div>
+
+<div class="content" id="content"></div>
+
+<!-- Rhyme Panel -->
+<div class="slide-panel" id="rhymePanel">
+  <div class="panel-drag-handle"></div>
+  <div class="panel-header">
+    <div>
+      <span class="panel-label">Rhymes for</span>
+      <span class="panel-target-word" id="rhymeTargetWord">—</span>
+    </div>
+    <button class="close-panel" onclick="closePanel('rhymePanel')">×</button>
+  </div>
+  <div class="panel-toggles">
+    <button class="panel-toggle active" onclick="switchRhymeType(this,'perfect')">Perfect</button>
+    <button class="panel-toggle"        onclick="switchRhymeType(this,'near')">Near-rhyme</button>
+    <button class="panel-toggle"        onclick="switchRhymeType(this,'sounds')">Sounds like</button>
+  </div>
+  <div class="panel-results" id="rhymeResults">
+    <span class="panel-status">Tap any word in your lyrics</span>
+  </div>
+</div>
+
+<!-- Braindump Panel -->
+<div class="slide-panel" id="braindumpPanel">
+  <div class="panel-drag-handle"></div>
+  <div class="panel-header">
+    <div>
+      <span class="panel-label">Word braindump</span>
+    </div>
+    <button class="close-panel" onclick="closePanel('braindumpPanel')">×</button>
+  </div>
+  <div class="panel-results" id="braindumpResults">
+    <span class="panel-status">Type a theme/idea above, then tap Brainstorm again</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Default section seed ──────────────────────────────────────────────────
+const DEFAULT_SECTIONS = [
+  { name:'Verse',      range:{ green:[6,11],  orange:[4,13]  }, lines:['','','',''] },
+  { name:'Pre-Chorus', range:{ green:[6,10],  orange:[4,12]  }, lines:['','','',''] },
+  { name:'Chorus',     range:{ green:[5,9],   orange:[3,11]  }, lines:['','','',''] },
+  { name:'Bridge',     range:{ green:[4,10],  orange:[3,12]  }, lines:['','','',''] },
+  { name:'Outro',      range:null,                              lines:['','','',''] },
+];
+const DEFAULT_RANGE = { green:[6,11], orange:[4,13] }; // used for custom/repeated sections
+
+const STORAGE_KEY = 'lyricForgeState_v1';
+const HISTORY_KEY = 'lyricForgeHistory_v1';
+let lineIdCounter = 0;
+let historyStore = {}; // { lineId: [ {text, ts}, ... ] }
+
+// ─── Syllable counter ──────────────────────────────────────────────────────
+function syllables(word) {
+  word = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!word) return 0;
+
+  let count = 0, inVowel = false;
+  for (const ch of word) {
+    const v = /[aeiouy]/.test(ch);
+    if (v && !inVowel) count++;
+    inVowel = v;
+  }
+
+  if (word.length > 2 && word.endsWith('e') && count > 1) {
+    const prev  = word[word.length - 2];
+    const prev2 = word[word.length - 3] || '';
+    if (!/[aeiouy]/.test(prev)) {
+      const isConsonantLe = prev === 'l' && prev2 && !/[aeiouy]/.test(prev2);
+      if (!isConsonantLe) count--;
+    }
+  }
+
+  return Math.max(1, count);
+}
+
+function lineSyllables(text) {
+  return text.replace(/[^\w\s']/g,'').trim()
+    .split(/\s+/).filter(Boolean)
+    .reduce((n,w) => n + syllables(w), 0);
+}
+
+function syllableColor(n, range) {
+  if (!range || n === 0) return '';
+  if (n >= range.green[0]  && n <= range.green[1])  return 'green';
+  if (n >= range.orange[0] && n <= range.orange[1]) return 'orange';
+  return 'red';
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+// ─── Line history ──────────────────────────────────────────────────────────
+function recordHistory(lineId, oldText) {
+  if (!oldText || !oldText.trim()) return;
+  if (!historyStore[lineId]) historyStore[lineId] = [];
+  const arr = historyStore[lineId];
+  if (arr.length && arr[arr.length - 1].text === oldText) return;
+  arr.push({ text: oldText, ts: Date.now() });
+  if (arr.length > 8) arr.shift();
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(historyStore));
+}
+
+function buildHistoryPopover(lineId, editor) {
+  const pop = document.createElement('div');
+  pop.className = 'history-popover';
+  const items = historyStore[lineId] || [];
+  if (!items.length) {
+    pop.innerHTML = '<div class="history-empty">No earlier versions yet</div>';
+  } else {
+    [...items].reverse().forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'history-item';
+      const txt = document.createElement('span');
+      txt.className = 'history-item-text';
+      txt.textContent = item.text;
+      const restore = document.createElement('span');
+      restore.className = 'history-restore';
+      restore.textContent = 'Use';
+      row.appendChild(txt);
+      row.appendChild(restore);
+      row.onclick = () => {
+        const oldText = editor.innerText.replace(/\n/g,' ');
+        recordHistory(lineId, oldText);
+        editor.innerText = item.text;
+        editor.dispatchEvent(new Event('input'));
+        pop.classList.remove('open');
+        saveState();
+      };
+      pop.appendChild(row);
+    });
+  }
+  return pop;
+}
+
+// ─── Build section DOM ─────────────────────────────────────────────────────
+function makeLineRow(sectionEl, range, text) {
+  const lineId = 'line-' + (++lineIdCounter) + '-' + Math.random().toString(36).slice(2,7);
+
+  const row  = document.createElement('div');
+  row.className = 'line-row';
+  row.dataset.lineId = lineId;
+
+  const lines = sectionEl.querySelectorAll('.line-row');
+  const num   = document.createElement('div');
+  num.className = 'line-num';
+  num.textContent = lines.length + 1;
+
+  const editor = document.createElement('div');
+  editor.className = 'line-editor';
+  editor.contentEditable = 'true';
+  editor.setAttribute('data-placeholder', 'Write a line...');
+  editor.spellcheck = true;
+  if (text) editor.innerText = text;
+
+  const badge = document.createElement('div');
+  badge.className = 'syllable-badge';
+  const initCount = text ? lineSyllables(text) : 0;
+  badge.textContent = initCount || '—';
+  badge.className = 'syllable-badge ' + (initCount > 0 ? syllableColor(initCount, range) : '');
+
+  const histBtn = document.createElement('button');
+  histBtn.className = 'history-btn';
+  histBtn.textContent = '🕘';
+  histBtn.title = 'Earlier versions of this line';
+  histBtn.onclick = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.history-popover.open').forEach(p => p.classList.remove('open'));
+    let pop = histBtn.querySelector('.history-popover');
+    if (pop) pop.remove();
+    pop = buildHistoryPopover(lineId, editor);
+    histBtn.appendChild(pop);
+    pop.classList.add('open');
+  };
+
+  let lastCommitted = text || '';
+  editor.addEventListener('blur', () => {
+    const current = editor.innerText.replace(/\n/g,' ');
+    if (current !== lastCommitted) {
+      recordHistory(lineId, lastCommitted);
+      lastCommitted = current;
+      if (historyStore[lineId] && historyStore[lineId].length) {
+        histBtn.classList.add('has-history');
+      }
+    }
+  });
+
+  const del = document.createElement('button');
+  del.className = 'delete-line-btn';
+  del.textContent = '×';
+  del.title = 'Remove line';
+  del.onclick = () => { row.remove(); reNumberLines(sectionEl); updateProgress(sectionEl); saveState(); };
+
+  editor.addEventListener('input', () => {
+    const txt  = editor.innerText.replace(/\n/g,' ');
+    const count = lineSyllables(txt);
+    badge.textContent = count || '—';
+    badge.className   = 'syllable-badge ' + (count > 0 ? syllableColor(count, range) : '');
+    updateProgress(sectionEl);
+    debouncedSave();
+  });
+
+  editor.addEventListener('mouseup',  e => wordTap(e, editor));
+  editor.addEventListener('touchend', e => wordTap(e, editor));
+
+  row.appendChild(num);
+  row.appendChild(editor);
+  row.appendChild(badge);
+  row.appendChild(histBtn);
+  row.appendChild(del);
+  return row;
+}
+
+function reNumberLines(sectionEl) {
+  sectionEl.querySelectorAll('.line-row').forEach((row, i) => {
+    const n = row.querySelector('.line-num');
+    if (n) n.textContent = i + 1;
+  });
+}
+
+function addLines(sectionEl, body, addRow, range, count) {
+  for (let i = 0; i < count; i++) {
+    const row = makeLineRow(sectionEl, range);
+    body.insertBefore(row, addRow);
+  }
+  reNumberLines(sectionEl);
+  updateProgress(sectionEl);
+  saveState();
+}
+
+function buildSection(s) {
+  const el = document.createElement('div');
+  el.className = 'section';
+  el.dataset.range = s.range ? JSON.stringify(s.range) : '';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'section-header';
+  header.innerHTML = `
+    <span class="chevron">▼</span>
+    <input class="section-name" value="${s.name.replace(/"/g,'&quot;')}" />
+    <span class="section-stats"></span>
+    <button class="reorder-btn up-btn" title="Move up">▲</button>
+    <button class="reorder-btn down-btn" title="Move down">▼</button>
+    <button class="lock-btn" onclick="toggleLock(event,this)">Lock</button>
+    <button class="del-section-btn" title="Delete section">🗑</button>
+  `;
+  header.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+    el.classList.toggle('collapsed');
+  });
+  header.querySelector('.section-name').addEventListener('click', e => e.stopPropagation());
+  header.querySelector('.section-name').addEventListener('input', () => debouncedSave());
+  header.querySelector('.up-btn').onclick = (e) => { e.stopPropagation(); moveSection(el, -1); };
+  header.querySelector('.down-btn').onclick = (e) => { e.stopPropagation(); moveSection(el, 1); };
+  header.querySelector('.del-section-btn').onclick = (e) => {
+    e.stopPropagation();
+    if (confirm('Delete this section? This can\'t be undone.')) {
+      el.remove();
+      saveState();
+    }
+  };
+
+  // Progress bar
+  const prog = document.createElement('div');
+  prog.className = 'section-progress';
+  prog.innerHTML = '<div class="section-progress-fill"></div>';
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'section-body';
+
+  const initialLines = (s.lines && s.lines.length) ? s.lines : ['','','',''];
+  initialLines.forEach(text => body.appendChild(makeLineRow(el, s.range, text)));
+
+  // Add line row (single + 4-at-once)
+  const addRow = document.createElement('div');
+  addRow.className = 'add-line-row';
+
+  const addOneBtn = document.createElement('button');
+  addOneBtn.className = 'add-line-btn';
+  addOneBtn.textContent = '+ Add line';
+  addOneBtn.onclick = () => {
+    addLines(el, body, addRow, s.range, 1);
+    const rows = body.querySelectorAll('.line-editor');
+    rows[rows.length - 1].focus();
+  };
+
+  const addFourBtn = document.createElement('button');
+  addFourBtn.className = 'add-line-btn';
+  addFourBtn.textContent = '+ Add 4 lines';
+  addFourBtn.onclick = () => addLines(el, body, addRow, s.range, 4);
+
+  addRow.appendChild(addOneBtn);
+  addRow.appendChild(addFourBtn);
+  body.appendChild(addRow);
+
+  el.appendChild(header);
+  el.appendChild(prog);
+  el.appendChild(body);
+  return el;
+}
+
+function moveSection(el, dir) {
+  const parent = el.parentElement;
+  // sections and between-rows are interleaved; work with section list only
+  const sections = [...parent.querySelectorAll('.section')];
+  const idx = sections.indexOf(el);
+  const targetIdx = idx + dir;
+  if (targetIdx < 0 || targetIdx >= sections.length) return;
+  const target = sections[targetIdx];
+
+  // swap the section + its following between-row as a pair
+  const elBetween = el.nextElementSibling && el.nextElementSibling.classList.contains('between-row') ? el.nextElementSibling : null;
+  const targetBetween = target.nextElementSibling && target.nextElementSibling.classList.contains('between-row') ? target.nextElementSibling : null;
+
+  if (dir === 1) {
+    // moving el down past target: insert el (+betweenEl) after target(+targetBetween)
+    const insertAfter = targetBetween || target;
+    insertAfter.after(el);
+    if (elBetween) el.after(elBetween);
+  } else {
+    // moving el up before target
+    target.before(el);
+    if (elBetween) el.after(elBetween);
+  }
+  saveState();
+  refreshReorderButtons();
+}
+
+function refreshReorderButtons() {
+  const sections = [...document.querySelectorAll('.section')];
+  sections.forEach((s, i) => {
+    s.querySelector('.up-btn').disabled = (i === 0);
+    s.querySelector('.down-btn').disabled = (i === sections.length - 1);
+  });
+}
+
+function insertBetweenRow(afterEl) {
+  const row = document.createElement('div');
+  row.className = 'between-row';
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'between-btn';
+  addBtn.textContent = '+ Add section';
+  addBtn.onclick = () => {
+    const name = prompt('Section name (e.g. Verse 2, Hook, Ad-lib):', 'New Section');
+    if (name === null) return;
+    const newSection = buildSection({ name: name.trim() || 'New Section', range: DEFAULT_RANGE, lines: ['','','',''] });
+    row.after(newSection);
+    insertBetweenRow(newSection);
+    saveState();
+    refreshReorderButtons();
+  };
+
+  const repeatBtn = document.createElement('button');
+  repeatBtn.className = 'between-btn';
+  repeatBtn.textContent = '↻ Repeat section';
+  repeatBtn.onclick = () => {
+    const sections = [...document.querySelectorAll('.section')];
+    const names = sections.map(s => s.querySelector('.section-name').value || 'Untitled');
+    const choice = prompt('Repeat which section? Type the exact name:\n\n' + names.join('\n'));
+    if (!choice) return;
+    const matchIdx = names.findIndex(n => n.toLowerCase() === choice.trim().toLowerCase());
+    if (matchIdx === -1) { alert('No section found with that name.'); return; }
+    const src = sections[matchIdx];
+    const range = src.dataset.range ? JSON.parse(src.dataset.range) : DEFAULT_RANGE;
+    const lines = [...src.querySelectorAll('.line-editor')].map(e => e.innerText.replace(/\n/g,' '));
+    const clone = buildSection({ name: names[matchIdx] + ' (repeat)', range, lines });
+    row.after(clone);
+    insertBetweenRow(clone);
+    saveState();
+    refreshReorderButtons();
+  };
+
+  row.appendChild(addBtn);
+  row.appendChild(repeatBtn);
+  afterEl.after(row);
+  return row;
+}
+
+function updateProgress(sectionEl) {
+  const editors = sectionEl.querySelectorAll('.line-editor');
+  const filled  = [...editors].filter(e => e.innerText.trim().length > 0).length;
+  const pct     = editors.length ? Math.round(filled / editors.length * 100) : 0;
+  const fill    = sectionEl.querySelector('.section-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  const stats   = sectionEl.querySelector('.section-stats');
+  if (stats) stats.textContent = filled + '/' + editors.length + ' lines';
+}
+
+function toggleLock(e, btn) {
+  e.stopPropagation();
+  const s      = btn.closest('.section');
+  const locked = s.classList.toggle('locked');
+  btn.textContent = locked ? 'Locked ✓' : 'Lock';
+  saveState();
+}
+
+// ─── Rhyme panel ───────────────────────────────────────────────────────────
+let activeWord = '';
+let activeType = 'perfect';
+const rhymeCache = {};
+
+function wordTap(e, editor) {
+  setTimeout(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    const r   = sel.getRangeAt(0);
+    const node = r.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) return;
+
+    const text   = node.textContent;
+    const offset = r.startOffset;
+
+    let start = offset, end = offset;
+    while (start > 0 && /\w/.test(text[start - 1])) start--;
+    while (end < text.length && /\w/.test(text[end])) end++;
+
+    const word = text.slice(start, end).replace(/[^a-z']/gi, '').toLowerCase();
+    if (!word || word.length < 2) return;
+
+    activeWord = word;
+    document.getElementById('rhymeTargetWord').textContent = word;
+    openPanel('rhymePanel');
+    loadRhymes(word, activeType);
+  }, 80);
+}
+
+function openPanel(id) {
+  document.querySelectorAll('.slide-panel').forEach(p => p.classList.remove('open'));
+  document.getElementById(id).classList.add('open');
+}
+
+function closePanel(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function switchRhymeType(btn, type) {
+  btn.parentElement.querySelectorAll('.panel-toggle').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeType = type;
+  if (activeWord) loadRhymes(activeWord, type);
+}
+
+async function loadRhymes(word, type) {
+  const key = word + ':' + type;
+  const el  = document.getElementById('rhymeResults');
+
+  if (rhymeCache[key]) { renderChips(el, rhymeCache[key]); return; }
+
+  el.innerHTML = '<span class="panel-status">Loading...</span>';
+
+  const urls = {
+    perfect: `https://api.datamuse.com/words?rel_rhy=${word}&max=40`,
+    near:    `https://api.datamuse.com/words?rel_nry=${word}&max=40`,
+    sounds:  `https://api.datamuse.com/words?sl=${word}&max=40`,
+  };
+
+  try {
+    const res  = await fetch(urls[type]);
+    const data = await res.json();
+    const words = data.map(d => d.word);
+    rhymeCache[key] = words;
+    renderChips(el, words);
+  } catch {
+    el.innerHTML = '<span class="panel-status">No connection — try again</span>';
+  }
+}
+
+function renderChips(el, words) {
+  if (!words.length) {
+    el.innerHTML = '<span class="panel-status">No results found</span>';
+    return;
+  }
+  el.innerHTML = '';
+  words.forEach(w => {
+    const chip = document.createElement('span');
+    chip.className = 'word-chip';
+    chip.textContent = w;
+    chip.onclick = () => {
+      navigator.clipboard.writeText(w).catch(() => {});
+      chip.classList.add('copied');
+      const orig = chip.textContent;
+      chip.textContent = '✓ ' + w;
+      setTimeout(() => { chip.textContent = orig; chip.classList.remove('copied'); }, 1200);
+    };
+    el.appendChild(chip);
+  });
+}
+
+// ─── Braindump panel (auto-grouped by rhymability) ─────────────────────────
+function openBraindumpPanel() {
+  const theme = document.getElementById('themeInput').value.trim();
+  openPanel('braindumpPanel');
+  if (!theme) {
+    document.getElementById('braindumpResults').innerHTML =
+      '<span class="panel-status">Type a theme/idea in the box under the title first</span>';
+    return;
+  }
+  loadBraindump(theme);
+}
+
+// Crude rhyme-family key: last stressed-ish vowel cluster + everything after it.
+// Good enough to cluster "day/way/say" and "night/light/right" together without a phonetic API.
+function rhymeKey(word) {
+  const w = word.toLowerCase().replace(/[^a-z]/g, '');
+  const m = w.match(/[aeiouy]+[^aeiouy]*$/);
+  return m ? m[0] : w.slice(-2);
+}
+
+async function loadBraindump(theme) {
+  const el = document.getElementById('braindumpResults');
+  el.innerHTML = '<span class="panel-status">Loading...</span>';
+  try {
+    const res  = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(theme)}&max=60`);
+    const data = await res.json();
+    const words = data.map(d => d.word);
+    renderRhymeGroupedChips(el, words);
+  } catch {
+    el.innerHTML = '<span class="panel-status">No connection — try again</span>';
+  }
+}
+
+function renderRhymeGroupedChips(el, words) {
+  if (!words.length) {
+    el.innerHTML = '<span class="panel-status">No results found</span>';
+    return;
+  }
+
+  // Group by rhyme key
+  const groups = {};
+  words.forEach(w => {
+    const key = rhymeKey(w);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(w);
+  });
+
+  // Rhyme families (2+ words) first, sorted biggest first; solo words go in a trailing "Other" group
+  const families = Object.entries(groups).filter(([,arr]) => arr.length > 1)
+    .sort((a,b) => b[1].length - a[1].length);
+  const solo = Object.values(groups).filter(arr => arr.length === 1).flat();
+
+  el.innerHTML = '';
+  el.style.display = 'block';
+  el.style.maxHeight = '260px';
+
+  families.forEach(([key, arr]) => {
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#bbb;margin:8px 0 4px;';
+    label.textContent = 'rhymes with "-' + key + '" · ' + arr.length;
+    el.appendChild(label);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;';
+    arr.forEach(w => row.appendChild(makeWordChip(w)));
+    el.appendChild(row);
+  });
+
+  if (solo.length) {
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#bbb;margin:8px 0 4px;';
+    label.textContent = 'other';
+    el.appendChild(label);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;';
+    solo.forEach(w => row.appendChild(makeWordChip(w)));
+    el.appendChild(row);
+  }
+}
+
+function makeWordChip(w) {
+  const chip = document.createElement('span');
+  chip.className = 'word-chip';
+  chip.textContent = w;
+  chip.onclick = () => {
+    navigator.clipboard.writeText(w).catch(() => {});
+    chip.classList.add('copied');
+    const orig = chip.textContent;
+    chip.textContent = '✓ ' + w;
+    setTimeout(() => { chip.textContent = orig; chip.classList.remove('copied'); }, 1200);
+  };
+  return chip;
+}
+
+// ─── Save / Export / Load ──────────────────────────────────────────────────
+function serializeState() {
+  const sections = [...document.querySelectorAll('.section')].map(s => ({
+    name: s.querySelector('.section-name').value,
+    locked: s.classList.contains('locked'),
+    range: s.dataset.range ? JSON.parse(s.dataset.range) : null,
+    lines: [...s.querySelectorAll('.line-editor')].map(e => e.innerText.replace(/\n/g,' ')),
+  }));
+  return {
+    title: document.getElementById('songTitle').value,
+    theme: document.getElementById('themeInput').value,
+    artist: document.getElementById('artistInput').value,
+    sections,
+  };
+}
+
+let saveDebounceTimer = null;
+function debouncedSave() {
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(saveState, 700);
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
+}
+
+function manualSave() {
+  saveState();
+  showToast('Saved ✓');
+}
+
+function exportToFile() {
+  const state = serializeState();
+  let text = (state.title || 'Untitled song') + '\n' + '='.repeat((state.title || 'Untitled song').length) + '\n\n';
+  state.sections.forEach(s => {
+    text += '[' + s.name + ']\n';
+    s.lines.filter(l => l.trim()).forEach(l => text += l + '\n');
+    text += '\n';
+  });
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = (state.title || 'lyric-forge-song').replace(/[^\w\- ]/g,'').trim() + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Exported — open the .txt in Notes or anywhere');
+}
+
+// ─── Export to Obsidian (Lyric Template format) ────────────────────────────
+function exportToObsidian() {
+  const state  = serializeState();
+  const title  = (state.title || 'Untitled song').trim();
+  const artist = (state.artist || 'Artist Name').trim();
+
+  // Frontmatter matches 50 Templates/Lyric Template.md
+  let md = '---\n';
+  md += `artist: "[[${artist}]]"\n`;
+  md += 'album: \n';
+  md += 'status: DRAFT\n';
+  md += 'type: original\n';
+  md += 'tags:\n  - lyrics\n';
+  md += '---\n\n';
+
+  state.sections.forEach(s => {
+    const filled = s.lines.filter(l => l.trim());
+    if (!filled.length) return;
+    md += `[${s.name}]\n`;
+    filled.forEach(l => md += l + '\n');
+    md += '\n';
+  });
+
+  md += `---\n*See also: [[${artist}]]*\n`;
+
+  const filename = title.replace(/[^\w\- ]/g, '').trim() + '.md';
+
+  // Primary path: download the .md file directly — works everywhere,
+  // including mobile Safari (Share Sheet → Save to Files → move into the vault).
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  // Bonus path: try Obsidian's own URI scheme too, in case the Obsidian app
+  // is installed and registered to handle it (silently does nothing if not).
+  try {
+    const vault = 'Personal OS';
+    const uri = 'obsidian://new?vault=' + encodeURIComponent(vault)
+      + '&name=' + encodeURIComponent('40 Projects/Music/Lyrics/' + title)
+      + '&content=' + encodeURIComponent(md);
+    const link = document.createElement('a');
+    link.href = uri;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch {}
+
+  showToast('Exported for Obsidian — check Files/Downloads, or Obsidian if it opened');
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const histRaw = localStorage.getItem(HISTORY_KEY);
+  if (histRaw) { try { historyStore = JSON.parse(histRaw); } catch {} }
+
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  let sectionsToLoad = DEFAULT_SECTIONS;
+  if (raw) {
+    try {
+      const state = JSON.parse(raw);
+      document.getElementById('songTitle').value = state.title || '';
+      document.getElementById('themeInput').value = state.theme || '';
+      document.getElementById('artistInput').value = state.artist || '';
+      if (state.sections && state.sections.length) sectionsToLoad = state.sections;
+    } catch {}
+  }
+
+  let lastEl = null;
+  sectionsToLoad.forEach(s => {
+    const el = buildSection(s);
+    if (s.locked) {
+      el.classList.add('locked');
+      el.querySelector('.lock-btn').textContent = 'Locked ✓';
+    }
+    content.appendChild(el);
+    lastEl = insertBetweenRow(el);
+    updateProgress(el);
+  });
+
+  content.insertAdjacentHTML('beforeend',
+    '<p class="tap-hint">Tap or click any word to see rhymes · use Brainstorm for theme-based word ideas</p>'
+  );
+
+  refreshReorderButtons();
+}
+
+document.getElementById('songTitle').addEventListener('input', debouncedSave);
+document.getElementById('themeInput').addEventListener('input', debouncedSave);
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.history-btn')) {
+    document.querySelectorAll('.history-popover.open').forEach(p => p.classList.remove('open'));
+  }
+});
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+loadState();
+</script>
+</body>
+</html>
