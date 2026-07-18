@@ -2,18 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lyric Forge">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Lyric Forge</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html { overscroll-behavior-y: none; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #fff;
       color: #1a1a1a;
       min-height: 100vh;
+      min-height: 100dvh;
       max-width: 680px;
       margin: 0 auto;
+      overscroll-behavior-y: contain;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    button, input, .header-btn, .between-btn, .add-line-btn, .lock-btn, .reorder-btn, .del-section-btn {
+      -webkit-touch-callout: none;
     }
 
     /* ── Header ── */
@@ -22,7 +36,7 @@
       top: 0;
       background: #fff;
       border-bottom: 1px solid #ebebeb;
-      padding: 12px 16px 14px;
+      padding: max(12px, env(safe-area-inset-top)) 16px 14px;
       z-index: 100;
     }
 
@@ -51,16 +65,30 @@
       color: #1a1a1a;
       background: transparent;
       font-family: inherit;
+      min-height: 44px;
     }
 
     .song-title-input::placeholder { color: #d0d0d0; }
 
+    .header-btn-row {
+      display: flex;
+      gap: 7px;
+      margin-top: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+
+    .header-btn-row::-webkit-scrollbar { display: none; }
+
     .header-btn {
       background: none;
       border: 1.5px solid #ddd;
-      border-radius: 8px;
-      padding: 6px 11px;
-      font-size: 12px;
+      border-radius: 9px;
+      padding: 9px 13px;
+      min-height: 40px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       color: #666;
@@ -68,11 +96,12 @@
       font-family: inherit;
       white-space: nowrap;
       flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .header-btn:hover { background: #f5f5f5; border-color: #ccc; }
+    .header-btn:active { background: #f0f0f0; }
     .header-btn.primary { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
-    .header-btn.primary:hover { background: #333; }
+    .header-btn.primary:active { background: #333; }
 
     .theme-row {
       display: flex;
@@ -84,8 +113,9 @@
       flex: 1;
       border: 1.5px solid #ebebeb;
       border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 13px;
+      padding: 10px 12px;
+      min-height: 40px;
+      font-size: 16px;
       font-family: inherit;
       outline: none;
       color: #444;
@@ -212,7 +242,9 @@
       background: none;
       border: 1.5px solid #ddd;
       border-radius: 7px;
-      padding: 3px 8px;
+      padding: 7px 9px;
+      min-height: 32px;
+      min-width: 32px;
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
@@ -316,17 +348,19 @@
       border: none;
       cursor: pointer;
       color: #ddd;
-      font-size: 13px;
-      padding: 6px 3px;
-      margin-top: 4px;
-      opacity: 0;
+      font-size: 15px;
+      padding: 10px 8px;
+      min-width: 32px;
+      min-height: 32px;
+      margin-top: 0;
+      opacity: 0.55;
       transition: opacity 0.15s, color 0.15s;
       flex-shrink: 0;
       font-family: inherit;
       position: relative;
     }
 
-    .line-row:hover .history-btn { opacity: 1; }
+    .line-row:hover .history-btn, .history-btn:active { opacity: 1; }
     .history-btn:hover { color: #666; }
     .history-btn.has-history { opacity: 1; color: #bbb; }
 
@@ -384,16 +418,18 @@
       border: none;
       cursor: pointer;
       color: #ddd;
-      font-size: 16px;
-      padding: 4px;
-      margin-top: 4px;
-      opacity: 0;
+      font-size: 18px;
+      padding: 8px;
+      min-width: 32px;
+      min-height: 32px;
+      margin-top: 0;
+      opacity: 0.55;
       transition: opacity 0.15s, color 0.15s;
       flex-shrink: 0;
       font-family: inherit;
     }
 
-    .line-row:hover .delete-line-btn { opacity: 1; }
+    .line-row:hover .delete-line-btn, .delete-line-btn:active { opacity: 1; }
     .delete-line-btn:hover { color: #ef4444; }
 
     /* Add line */
@@ -436,7 +472,7 @@
       background: #fff;
       border-top: 1.5px solid #ebebeb;
       border-radius: 18px 18px 0 0;
-      padding: 16px 16px 20px;
+      padding: 16px 16px max(20px, env(safe-area-inset-bottom));
       transform: translateY(100%);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 200;
@@ -552,7 +588,7 @@
     /* ── Toast ── */
     .toast {
       position: fixed;
-      bottom: 18px;
+      bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px));
       left: 50%;
       transform: translateX(-50%) translateY(20px);
       background: #1a1a1a;
@@ -588,6 +624,8 @@
   <div class="app-name">Lyric Forge</div>
   <div class="header-top-row">
     <input class="song-title-input" id="songTitle" type="text" placeholder="Untitled song..." />
+  </div>
+  <div class="header-btn-row">
     <button class="header-btn" onclick="openBraindumpPanel()">💡 Brainstorm</button>
     <button class="header-btn primary" onclick="manualSave()">💾 Save</button>
     <button class="header-btn" onclick="exportToFile()">⬇ Export</button>
